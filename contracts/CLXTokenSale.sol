@@ -1,4 +1,4 @@
-pragma solidity 0.4.21;
+pragma solidity 0.4.24;
 
 
 /**
@@ -52,7 +52,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor () public {
     owner = msg.sender;
   }
 
@@ -97,7 +97,7 @@ contract Vault is Ownable {
     
     event Withdrawn(address _wallet);
     
-    function Vault(address _wallet) public {
+    constructor (address _wallet) public {
         require(_wallet != address(0));
         wallet = _wallet;
     }
@@ -110,7 +110,7 @@ contract Vault is Ownable {
 
     
     function withdrawToWallet() public onlyOwner {
-     wallet.transfer(this.balance);
+     wallet.transfer(address(this).balance);
      emit Withdrawn(wallet);
   }
   
@@ -125,6 +125,9 @@ contract CLXTokenSale is Ownable{
       
       //All funds will go into this vault
       Vault public vault;
+      
+     // This mapping stores the addresses of whitelisted users
+      mapping(address => bool) public whitelisted;
   
       //rate of token in ether 1ETH = 8000 CLX
       uint256 public rate = 8000;
@@ -175,6 +178,12 @@ contract CLXTokenSale is Ownable{
       
       //Event to trigger normal flow of sale end
       event Finished(address _owner, uint256 time);
+      
+       //Event to add user to the whitelist
+      event LogUserAdded(address user);
+
+      //Event to remove user to the whitelist
+      event LogUserRemoved(address user);
     
      /**
      * event for token purchase logging
@@ -311,7 +320,7 @@ contract CLXTokenSale is Ownable{
     * @param _tokenToBeUsed Address of the token to be used for Sales
     * @param _wallet Address of the wallet which will receive the collected funds
     */  
-    function CLXTokenSale(address _tokenToBeUsed, address _wallet)public nonZeroAddress(_tokenToBeUsed) nonZeroAddress(_wallet){
+    constructor (address _tokenToBeUsed, address _wallet)public nonZeroAddress(_tokenToBeUsed) nonZeroAddress(_wallet){
         
         token = Token(_tokenToBeUsed);
         vault = new Vault(_wallet);
@@ -323,7 +332,7 @@ contract CLXTokenSale is Ownable{
         uint8[2] memory bonusPercentages;
         
         //pre-sales
-        startTimes[0] = 1523664000; //APRIL 14, 2018 00:00 AM GMT
+        startTimes[0] = 1530711340; //APRIL 14, 2018 00:00 AM GMT
         endTimes[0] = 0; //NO END TIME INITIALLY
         hardCaps[0] = 7500 ether;
         minEtherContribution[0] = 0.3 ether;
@@ -406,6 +415,8 @@ contract CLXTokenSale is Ownable{
    */
    function buyTokens(address beneficiary)public _contractUp _saleNotEnded _ifNotEmergencyStop nonZeroAddress(beneficiary) payable returns(bool){
        
+       require(whitelisted[beneficiary]);
+
        int8 currentPhaseIndex = getCurrentlyRunningPhase();
        assert(currentPhaseIndex >= 0);
        
@@ -466,6 +477,53 @@ contract CLXTokenSale is Ownable{
       }   
       return -1;
    }
+
+   
+   // Add a user to the whitelist
+   function addUser(address user) public nonZeroAddress(user) onlyOwner returns (bool) {
+
+       require(whitelisted[user] == false);
+       
+       whitelisted[user] = true;
+
+       emit LogUserAdded(user);
+       
+       return true;
+
+    }
+
+    // Remove an user from the whitelist
+    function removeUser(address user) public nonZeroAddress(user) onlyOwner returns(bool){
+      
+        require(whitelisted[user] = true);
+
+        whitelisted[user] = false;
+        
+        emit LogUserRemoved(user);
+        
+        return true;
+
+
+    }
+
+    // Add many users in one go to the whitelist
+    function addManyUsers(address[] users)public onlyOwner {
+        
+        require(users.length < 100);
+
+        for (uint8 index = 0; index < users.length; index++) {
+
+             whitelisted[users[index]] = true;
+
+             emit LogUserAdded(users[index]);
+
+        }
+    }
+
+     //Method to check whether a user is there in the whitelist or not
+    function checkUser(address user) onlyOwner public view  returns (bool){
+        return whitelisted[user];
+    }
    
    
    /**
@@ -480,7 +538,7 @@ contract CLXTokenSale is Ownable{
    * @dev Allow owner to withdraw funds to his wallet anytime in between the sale process 
    */
 
-    function withDrawFunds()public onlyOwner _saleNotEnded _contractUp {
+    function withDrawFunds()public onlyOwner _contractUp {
       
        vault.withdrawToWallet();
     }
