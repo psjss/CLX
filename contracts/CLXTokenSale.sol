@@ -332,7 +332,7 @@ contract CLXTokenSale is Ownable{
         uint8[2] memory bonusPercentages;
         
         //pre-sales
-        startTimes[0] = 1530711340; //APRIL 14, 2018 00:00 AM GMT
+        startTimes[0] = 1530810512; //JULY 5, 2018 16:18 PM GMT
         endTimes[0] = 0; //NO END TIME INITIALLY
         hardCaps[0] = 7500 ether;
         minEtherContribution[0] = 0.3 ether;
@@ -450,6 +450,24 @@ contract CLXTokenSale is Ownable{
 
        return true;
        
+   }
+   
+   //Check balance of token of each phase
+   function tokensLeftInPhase(int8 phase) public view returns(uint256) {
+       
+       PhaseInfo storage currentlyRunningPhase = phases[uint256(phase)];
+       uint256 tokensLeft;
+       
+       if(phase == 0) {
+            uint256 tokensInPreICO= 7200000000000000;
+            tokensLeft = tokensInPreICO.sub(currentlyRunningPhase.weiRaised.mul(9600).div(10000000000));
+            return tokensLeft;
+       }
+       else {
+           uint256 tokensInPublicSale = 10500000000000000;
+           tokensLeft = tokensInPublicSale.sub(currentlyRunningPhase.weiRaised.mul(8400).div(10000000000));
+            return tokensLeft;
+           }
    }
    
     /**
