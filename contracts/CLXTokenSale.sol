@@ -332,7 +332,7 @@ contract CLXTokenSale is Ownable{
         uint8[2] memory bonusPercentages;
         
         //pre-sales
-        startTimes[0] = 1530810512; //JULY 5, 2018 16:18 PM GMT
+        startTimes[0] = 1531074959; //JULY 5, 2018 16:18 PM GMT
         endTimes[0] = 0; //NO END TIME INITIALLY
         hardCaps[0] = 7500 ether;
         minEtherContribution[0] = 0.3 ether;
@@ -543,6 +543,10 @@ contract CLXTokenSale is Ownable{
         return whitelisted[user];
     }
    
+   //method to check the user balance
+   function checkUserTokenBalance(address _user) public view returns(uint256) {
+       return token.balanceOf(_user);
+   }
    
    /**
    * @dev Get funding info of user/address.
